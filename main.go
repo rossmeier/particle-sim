@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -197,29 +198,40 @@ func physics(t float32, x, v []mgl32.Vec2, force forceFunc) {
 	if len(x) > len(v) {
 		panic("not enough velocities")
 	}
-	c := 0
+	var c int64 = -1
 	var wg sync.WaitGroup
 	for i := 0; i < runtime.NumCPU(); i++ {
-		vOld := v[i]
-		v[i] = v[i].Add(force(x[i], v[i]).Mul(t))
-		x[i] = x[i].Add(vOld.Add(v[i]))
-		if x[i][0] < -1 {
-			x[i][0] = -2 - x[i][0]
-			v[i][0] = -v[i][0]
-		}
-		if x[i][0] > 1 {
-			x[i][0] = 2 - x[i][0]
-			v[i][0] = -v[i][0]
-		}
-		if x[i][1] < -1 {
-			x[i][1] = -2 - x[i][1]
-			v[i][1] = -v[i][1]
-		}
-		if x[i][1] > 1 {
-			x[i][1] = 2 - x[i][1]
-			v[i][1] = -v[i][1]
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				i := atomic.AddInt64(&c, 1)
+				if int(i) >= len(x) {
+					return
+				}
+				vOld := v[i]
+				v[i] = v[i].Add(force(x[i], v[i]).Mul(t))
+				x[i] = x[i].Add(vOld.Add(v[i]))
+				if x[i][0] < -1 {
+					x[i][0] = -2 - x[i][0]
+					v[i][0] = -v[i][0]
+				}
+				if x[i][0] > 1 {
+					x[i][0] = 2 - x[i][0]
+					v[i][0] = -v[i][0]
+				}
+				if x[i][1] < -1 {
+					x[i][1] = -2 - x[i][1]
+					v[i][1] = -v[i][1]
+				}
+				if x[i][1] > 1 {
+					x[i][1] = 2 - x[i][1]
+					v[i][1] = -v[i][1]
+				}
+			}
+		}()
 	}
+	wg.Wait()
 }
 
 func createVertexBuffer(in []mgl32.Vec2, v []mgl32.Vec2, out []float32) {
