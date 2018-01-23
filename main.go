@@ -33,8 +33,9 @@ func main() {
 
 	// configure window options
 	glfw.WindowHint(glfw.Samples, 4)
-	//glfw.WindowHint(glfw.ContextVersionMajor, 4)
-	//glfw.WindowHint(glfw.ContextVersionMinor, 1)
+	glfw.WindowHint(glfw.ContextVersionMajor, 3)
+	glfw.WindowHint(glfw.ContextVersionMinor, 3)
+	glfw.WindowHint(glfw.OpenGLForwardCompatible, gl.TRUE)
 
 	// create window
 	window, err := glfw.CreateWindow(1280, 720, "Testing", nil, nil)
