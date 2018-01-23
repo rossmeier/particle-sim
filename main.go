@@ -154,15 +154,15 @@ func main() {
 
 var vertexshader = `
 #version 330 core
-#extension GL_ARB_enhanced_layouts : enable
-layout(location=0) in vec3 pos;
-layout(location=0,component=3) in float color;
+/*#extension GL_ARB_enhanced_layouts : enable*/
+layout(location=0) in vec4 pos;
+/*layout(location=0,component=3) in float color;*/
 out float c;
 
 void main() {
-	gl_Position.xyz = pos;
+	gl_Position.xyz = pos.xyz;
 	gl_Position.w = 1.0;
-	c = color;
+	c = pos.w;
 }
 ` + "\x00"
 
