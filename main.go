@@ -57,6 +57,7 @@ func main() {
 	}
 
 	window.SetSizeCallback(func(w *glfw.Window, width int, height int) {
+		width, height = w.GetFramebufferSize()
 		gl.Viewport(0, 0, int32(width), int32(height))
 	})
 
@@ -72,7 +73,7 @@ func main() {
 	gl.BindVertexArray(vertexArrayID)
 
 	// init data for physics
-	points := make([]mgl32.Vec2, 100000)
+	points := make([]mgl32.Vec2, 200000)
 	for i := range points {
 		phi := 2 * math.Pi / float64(len(points)) * float64(i)
 		points[i][0] = float32(math.Cos(phi)) * .5
