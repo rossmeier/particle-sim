@@ -90,7 +90,7 @@ func main() {
 	var gVertexBufferDataMutex sync.Mutex
 
 	// start physics
-	asyncPhysics(points, velocities, forceFuncs, gVertexBufferData, gVertexBufferDataMutex)
+	asyncPhysics(points, velocities, forceFuncs, gVertexBufferData, &gVertexBufferDataMutex)
 
 	// init vertex buffer in gpu
 	var vertexbuffer uint32
@@ -185,7 +185,7 @@ void main() {
 }
 ` + "\x00"
 
-func asyncPhysics(x, v []mgl32.Vec2, force chan forceFunc, data []float32, dataMutex sync.Mutex) {
+func asyncPhysics(x, v []mgl32.Vec2, force chan forceFunc, data []float32, dataMutex *sync.Mutex) {
 	t := time.Now()
 	go func() {
 		f := <-force
