@@ -90,7 +90,8 @@ func main() {
 	var gVertexBufferDataMutex sync.Mutex
 
 	// start physics
-	asyncPhysics(points, velocities, forceFuncs, gVertexBufferData, &gVertexBufferDataMutex)
+	doPhysics := true
+	asyncPhysics(points, velocities, forceFuncs, gVertexBufferData, &gVertexBufferDataMutex, &doPhysics)
 
 	// init vertex buffer in gpu
 	var vertexbuffer uint32
@@ -158,6 +159,11 @@ func main() {
 		if window.GetKey(glfw.KeyEscape) == glfw.Press {
 			window.SetShouldClose(true)
 		}
+		if window.GetKey(glfw.KeySpace) == glfw.Press {
+			doPhysics = false
+		} else {
+			doPhysics = true
+		}
 	}
 }
 
@@ -185,11 +191,15 @@ void main() {
 }
 ` + "\x00"
 
-func asyncPhysics(x, v []mgl32.Vec2, force chan forceFunc, data []float32, dataMutex *sync.Mutex) {
+func asyncPhysics(x, v []mgl32.Vec2, force chan forceFunc, data []float32, dataMutex *sync.Mutex, run *bool) {
 	t := time.Now()
 	go func() {
 		f := <-force
 		for {
+			if !*run {
+				time.Sleep(50 * time.Millisecond)
+				continue
+			}
 			dt := float32(time.Since(t)) / float32(time.Second)
 			fmt.Println("Physics!", (1 / dt))
 			t = time.Now()
