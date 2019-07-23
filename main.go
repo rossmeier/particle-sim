@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -58,7 +57,11 @@ func main() {
 
 	window.SetSizeCallback(func(w *glfw.Window, width int, height int) {
 		width, height = w.GetFramebufferSize()
-		gl.Viewport(0, 0, int32(width), int32(height))
+		size := width
+		if height < width {
+			size = height
+		}
+		gl.Viewport(int32(width-size)/2, int32(height-size)/2, int32(size), int32(size))
 	})
 
 	// compile shaders
@@ -104,7 +107,12 @@ func main() {
 		// handle physics
 		x, y := window.GetCursorPos()
 		w, h := window.GetSize()
-		glX, glY := mgl32.ScreenToGLCoords(int(x), int(y), w, h)
+		size := w
+		if h < size {
+			size = h
+		}
+
+		glX, glY := mgl32.ScreenToGLCoords(int(x)-(w-size)/2, int(y)-(h-size)/2, size, size)
 		glPos := mgl32.Vec2{glX, glY}
 
 		force := float32(0)
@@ -201,17 +209,23 @@ func physics(t float32, x, v []mgl32.Vec2, force forceFunc) {
 	if len(x) > len(v) {
 		panic("not enough velocities")
 	}
-	var c int64 = -1
+	//var c int64 = -1
 	var wg sync.WaitGroup
-	for i := 0; i < runtime.NumCPU(); i++ {
+	chunk := len(x)/(runtime.NumCPU()*2) + 1
+	for s := 0; s < len(x); s += chunk {
+		start := s
+		end := start + chunk
+		if end > len(x) {
+			end = len(x)
+		}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for {
-				i := atomic.AddInt64(&c, 1)
-				if int(i) >= len(x) {
-					return
-				}
+			for i := start; i < end; i++ {
+				//i := atomic.AddInt64(&c, 1)
+				//if int(i) >= len(x) {
+				//	return
+				//}
 				vOld := v[i]
 				v[i] = v[i].Add(force(x[i], v[i]).Mul(t))
 				x[i] = x[i].Add(vOld.Add(v[i]))
