@@ -196,13 +196,13 @@ func asyncPhysics(x, v []mgl32.Vec2, force chan forceFunc, data []float32, dataM
 	go func() {
 		f := <-force
 		for {
+			dt := float32(time.Since(t)) / float32(time.Second)
+			fmt.Println("Physics!", (1 / dt))
+			t = time.Now()
 			if !*run {
 				time.Sleep(50 * time.Millisecond)
 				continue
 			}
-			dt := float32(time.Since(t)) / float32(time.Second)
-			fmt.Println("Physics!", (1 / dt))
-			t = time.Now()
 			physics(dt, x, v, f)
 			dataMutex.Lock()
 			createVertexBuffer(x, v, data)
