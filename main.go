@@ -38,7 +38,7 @@ func main() {
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 
 	// create window
-	window, err := glfw.CreateWindow(1280, 720, "Testing", nil, nil)
+	window, err := glfw.CreateWindow(720, 720, "Testing", nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -55,14 +55,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	window.SetSizeCallback(func(w *glfw.Window, width int, height int) {
-		width, height = w.GetFramebufferSize()
-		size := width
-		if height < width {
-			size = height
-		}
-		gl.Viewport(int32(width-size)/2, int32(height-size)/2, int32(size), int32(size))
-	})
+	window.SetSizeCallback(onResize)
 
 	// compile shaders
 	program, err := newProgram(vertexshader, fragmentshader)
@@ -107,13 +100,15 @@ func main() {
 
 		// handle physics
 		x, y := window.GetCursorPos()
+		// fmt.Println(x, y)
 		w, h := window.GetSize()
 		size := w
 		if h < size {
 			size = h
 		}
 
-		glX, glY := mgl32.ScreenToGLCoords(int(x)-(w-size)/2, int(y)-(h-size)/2, size, size)
+		glX, glY := mgl32.ScreenToGLCoords(int(x), int(y), w, h)
+		// glX += float32(w) / float32(h)
 		glPos := mgl32.Vec2{glX, glY}
 
 		force := float32(0)
@@ -197,7 +192,7 @@ func asyncPhysics(x, v []mgl32.Vec2, force chan forceFunc, data []float32, dataM
 		f := <-force
 		for {
 			dt := float32(time.Since(t)) / float32(time.Second)
-			fmt.Println("Physics!", (1 / dt))
+			// fmt.Println("Physics!", (1 / dt))
 			t = time.Now()
 			if !*run {
 				time.Sleep(50 * time.Millisecond)
@@ -363,4 +358,13 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 	}
 
 	return shader, nil
+}
+
+func onResize(w *glfw.Window, width int, height int) {
+	width, height = w.GetFramebufferSize()
+	size := width
+	if height < width {
+		size = height
+	}
+	gl.Viewport(int32(width-size)/2, int32(height-size)/2, int32(size), int32(size))
 }
